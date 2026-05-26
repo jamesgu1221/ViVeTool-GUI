@@ -50,9 +50,6 @@
     <Reference Include="Albacore.ViVe">
       <HintPath>..\lib\Albacore.ViVe.dll</HintPath>
     </Reference>
-    <Reference Include="CrashReporter.NET, Version=1.6.0.0, Culture=neutral, PublicKeyToken=7828e0fd88cab698, processorArchitecture=MSIL">
-      <HintPath>..\packages\CrashReporter.NET.Official.1.6.0\lib\net462\CrashReporter.NET.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Web.WebView2.Core, Version=1.0.1210.39, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Web.WebView2.1.0.1210.39\lib\net45\Microsoft.Web.WebView2.Core.dll</HintPath>
     </Reference>
@@ -115,7 +112,6 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ApplicationEvents.vb" />
-    <Compile Include="CrashReporter.vb" />
     <Compile Include="GlobalSuppressions.vb" />
     <Compile Include="GUI.vb">
       <SubType>Form</SubType>
@@ -181,9 +177,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <AdditionalFiles Include="C_Please_Change_CrashReporter.vb.md">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </AdditionalFiles>
     <Content Include="icons8-advertisement-page-96.ico" />
     <Content Include="Images\about.ico" />
     <Content Include="Images\icons8_about_24.png" />

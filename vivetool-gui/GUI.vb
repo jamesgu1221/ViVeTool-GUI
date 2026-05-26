@@ -102,10 +102,6 @@ Public Class GUI
     ''' <param name="sender">Default sender Object</param>
     ''' <param name="e">Default EventArgs</param>
     Private Sub GUI_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        'Listen to Application Crashes and show CrashReporter.Net if one occurs.
-        AddHandler Application.ThreadException, AddressOf CrashReporter.ApplicationThreadException
-        AddHandler AppDomain.CurrentDomain.UnhandledException, AddressOf CrashReporter.CurrentDomainOnUnhandledException
-
         'Make a Background Thread that handles Background Tasks
         Dim BackgroundThread As New Threading.Thread(AddressOf BackgroundTasks) With {
             .IsBackground = True
