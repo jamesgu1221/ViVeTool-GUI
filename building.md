@@ -1,18 +1,20 @@
-# Building ViVeTool GUI
-### Build Requirements:
-- ViVeTool GUI was created in Visual Studio 2022. Older Versions may not work.
+# Building ViVeTool GUI (fork)
+
+### Build Requirements
+- Visual Studio 2022
 - Windows 10 Version 2004 / Windows 11
 
-### The first time you open up the solution, you´ll be met with Reference Issues.
-To fix the Reference Issues for Albacore.ViVe, use the DLL from the `lib` Folder or [build it yourself](https://github.com/thebookisclosed/ViVe/tree/master/ViVe)
+### NuGet packages
+Open the solution in VS 2022. Visual Studio will automatically restore NuGet packages (Newtonsoft.Json 13.0.4) on first build. No manual steps needed.
 
-To fix the Reference Issues for AutoUpdater.NET, CrashReporter.Net and Newtonsft.JSON, open the Package Manager Console.
-You will be asked if you want to restore the NuGet packages, do so by pressing on Restore.
+### Albacore.ViVe
+The pre-built `lib\Albacore.ViVe.dll` is included in the repository. No action required unless you want to rebuild it from [thebookisclosed/ViVe](https://github.com/thebookisclosed/ViVe).
 
-To fix the Reference Issues for the Telerik libraries either use the DLLs from the `lib\RCWF\2021.3.1109.40` Folder or install the [Telerik UI for WinForms Suite (login required to download installer)](https://www.telerik.com/login/ui-for-winforms).
+### Telerik UI for WinForms
+The required Telerik binaries (version 2021.3.1109.40) are included in `lib\RCWF\2021.3.1109.40`. The solution references them directly — no Telerik installation is required to build.
 
-### You will not be able to access the designer if you do not have the Telerik UI for WinForms Suite installed. 
+You will not be able to use the Visual Studio designer without the full Telerik UI for WinForms Suite installed, but code changes and builds work fine with the bundled DLLs.
 
-### However, you will be able to change the code and build ViVeTool GUI by referencing the Telerik libraries in the `lib\RCWF\2021.3.1109.40` folder.
-
-# **It is also highly recommended to change CrashReporter.vb, see [Please change CrashReporter.vb](https://github.com/PeterStrick/ViVeTool-GUI/blob/master/vivetool-gui/C_Please_Change_CrashReporter.vb.md)**
+### Known limitations
+- The build dropdown in the main window only shows older Windows builds (pre-24H2). The upstream mach2 feature list repository was archived in December 2024 and no longer provides flat `.txt` files for new builds.
+- Use **F12** to enter feature IDs manually, or **"Load manually..."** to import a local features file.
