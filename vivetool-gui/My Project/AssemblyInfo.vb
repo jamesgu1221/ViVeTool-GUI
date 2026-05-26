@@ -9,10 +9,10 @@ Imports System.Runtime.InteropServices
 ' Review the values of the assembly attributes
 
 <Assembly: AssemblyTitle("ViVeTool GUI")>
-<Assembly: AssemblyDescription("Windows Feature Control GUI for ViVeTool")>
-<Assembly: AssemblyCompany("Peters Software Solutions")>
+<Assembly: AssemblyDescription("Windows Feature Control GUI for ViVeTool (fork)")>
+<Assembly: AssemblyCompany("jamesgu1221 fork")>
 <Assembly: AssemblyProduct("ViVeTool GUI")>
-<Assembly: AssemblyCopyright("Copyright © 2022 Peters Software Solutions")>
+<Assembly: AssemblyCopyright("Copyright © 2022 Peter Strick, fork © 2026 jamesgu1221")>
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
@@ -31,5 +31,5 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.6.2.0")>
-<Assembly: AssemblyFileVersion("1.6.2.0")>
+<Assembly: AssemblyVersion("1.7.0.0")>
+<Assembly: AssemblyFileVersion("1.7.0.0")>
