@@ -622,7 +622,7 @@ Public Class ScannerUI
     End Sub
 
     ''' <summary>
-    ''' Form Load Event. Loads the labels and configures CrashReporter.Net
+    ''' Form Load Event. Loads the labels and initializes the UI
     ''' </summary>
     ''' <param name="sender">Default sender Object</param>
     ''' <param name="e">Default EventArgs</param>

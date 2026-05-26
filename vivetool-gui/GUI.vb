@@ -319,7 +319,7 @@ Public Class GUI
         AppendMenu(hSysMenu, MF_SEPARATOR, 0, String.Empty)
 
         ' Add the About menu item
-        AppendMenu(hSysMenu, MF_STRING, 1, "&About�")
+        AppendMenu(hSysMenu, MF_STRING, 1, "&About...")
     End Sub
 
     ''' <summary>

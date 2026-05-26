@@ -83,7 +83,7 @@ ViVeTool GUI - Feature Scanner uses [mach2](https://github.com/riverar/mach2) to
 
 ## Known Limitations
 
-- **Build dropdown missing Win11 24H2/25H2+**: The [riverar/mach2](https://github.com/riverar/mach2) repository was archived on 2024-12-14. Its `features/` directory was reorganized into release-train subdirectories — there are no longer flat `{build}.txt` files for recent Windows builds. The build combo box will not show builds from Windows 11 24H2 (26100) onward.
+- **Build dropdown missing Win11 24H2/25H2+**: The [riverar/mach2](https://github.com/riverar/mach2) repository was archived on 2024-12-14. Its `features/` directory was reorganized into release-train subdirectories - there are no longer flat `{build}.txt` files for recent Windows builds. The build combo box may show only older builds or none at all.
 
   **Workaround**: Use **F12** to enter feature IDs manually (fully offline, no build list needed), or use **"Load manually..."** in the build dropdown to import a local features `.txt` file.
 
