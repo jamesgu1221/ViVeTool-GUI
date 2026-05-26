@@ -1,5 +1,8 @@
+> [!NOTE]
+> **This is a personal fork** of [PeterStrick/ViVeTool-GUI](https://github.com/PeterStrick/ViVeTool-GUI) (archived upstream). See [Known Limitations](#known-limitations) below.
+
 > [!CAUTION]
-> # DEPRECATION NOTICE
+> # DEPRECATION NOTICE (upstream)
 >
 > This Project is unfortunately deprecated due to number of colliding factors, like me having less Motivation and Time to work on ViVeTool GUI; and the State of Windows deterioating on a day to day basis, which made me switch away from Windows to Linux full time and permanently
 >
@@ -77,4 +80,14 @@ ViVeTool GUI is inspired by [ViVeTool](https://github.com/thebookisclosed/ViVe) 
 ViVeTool GUI uses [files](https://github.com/riverar/mach2/tree/master/features) from [mach2](https://github.com/riverar/mach2) for the Build Combo Box.
 
 ViVeTool GUI - Feature Scanner uses [mach2](https://github.com/riverar/mach2) to create it's Feature Lists
+
+## Known Limitations
+
+- **Build dropdown missing Win11 24H2/25H2+**: The [riverar/mach2](https://github.com/riverar/mach2) repository was archived on 2024-12-14. Its `features/` directory was reorganized into release-train subdirectories — there are no longer flat `{build}.txt` files for recent Windows builds. The build combo box will not show builds from Windows 11 24H2 (26100) onward.
+
+  **Workaround**: Use **F12** to enter feature IDs manually (fully offline, no build list needed), or use **"Load manually..."** in the build dropdown to import a local features `.txt` file.
+
+- **AutoUpdater removed**: Upstream update checks have been removed. This fork does not auto-update.
+
+- **CrashReporter removed**: Crash reporting to the original developer has been removed.
 
