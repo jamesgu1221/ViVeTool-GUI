@@ -14,7 +14,7 @@
 'You should have received a copy of the GNU General Public License
 'along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Option Strict On
-Imports AutoUpdaterDotNET, Newtonsoft.Json.Linq, Albacore.ViVe, System.Runtime.InteropServices, Telerik.WinControls.UI
+Imports Newtonsoft.Json.Linq, Albacore.ViVe, System.Runtime.InteropServices, Telerik.WinControls.UI
 
 ''' <summary>
 ''' ViVeTool GUI
@@ -121,9 +121,6 @@ Public Class GUI
     ''' Background Tasks to be executed in a Thread
     ''' </summary>
     Private Sub BackgroundTasks()
-        'Check for Updates
-        AutoUpdater.Start("https://raw.githubusercontent.com/PeterStrick/ViVeTool-GUI/master/UpdaterXML.xml")
-
         'Populate the Build Combo Box, but first check if the PC is connected to the Internet, otherwise the GUI will crash without giving any helpful Information on WHY
         PopulateBuildComboBox_Check()
     End Sub
@@ -374,7 +371,7 @@ Public Class GUI
         AppendMenu(hSysMenu, MF_SEPARATOR, 0, String.Empty)
 
         ' Add the About menu item
-        AppendMenu(hSysMenu, MF_STRING, 1, "&About…")
+        AppendMenu(hSysMenu, MF_STRING, 1, "&Aboutï¿½")
     End Sub
 
     ''' <summary>
