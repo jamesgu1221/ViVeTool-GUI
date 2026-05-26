@@ -26,52 +26,6 @@ Public Class GUI
     Private Const WM_SYSCOMMAND As Integer = &H112
     Private Const MF_STRING As Integer = &H0
     Private Const MF_SEPARATOR As Integer = &H800
-    ReadOnly TempJSONUsedInDevelopment As String = "{
-  ""sha"": ""afeb63367f1bd15d63cfe30541a9a6ee51b940dd"",
-  ""url"": ""https://api.github.com/repos/riverar/mach2/git/trees/afeb63367f1bd15d63cfe30541a9a6ee51b940dd"",
-  ""tree"": [
-    {
-      ""path"": ""17643.txt"",
-      ""mode"": ""100644"",
-      ""type"": ""blob"",
-      ""sha"": ""ad8db3758b98fe1e6501077a06af93671f82a5d6"",
-      ""size"": 2534810,
-      ""url"": ""https://api.github.com/repos/riverar/mach2/git/blobs/ad8db3758b98fe1e6501077a06af93671f82a5d6""
-    },
-    {
-      ""path"": ""17643_17650_diff.patch"",
-      ""mode"": ""100644"",
-      ""type"": ""blob"",
-      ""sha"": ""d977490592e8ccf31238b08b9c99550c703e5271"",
-      ""size"": 7575,
-      ""url"": ""https://api.github.com/repos/riverar/mach2/git/blobs/d977490592e8ccf31238b08b9c99550c703e5271""
-    },
-    {
-      ""path"": ""17650.txt"",
-      ""mode"": ""100644"",
-      ""type"": ""blob"",
-      ""sha"": ""61f1358312c832eae48d218d0ac86c1b3e576540"",
-      ""size"": 39631,
-      ""url"": ""https://api.github.com/repos/riverar/mach2/git/blobs/61f1358312c832eae48d218d0ac86c1b3e576540""
-    },
-    {
-      ""path"": ""17650_17655_diff.patch"",
-      ""mode"": ""100644"",
-      ""type"": ""blob"",
-      ""sha"": ""428821fa035728c38fc22d681fdc1e9748516bcc"",
-      ""size"": 2496,
-      ""url"": ""https://api.github.com/repos/riverar/mach2/git/blobs/428821fa035728c38fc22d681fdc1e9748516bcc""
-    },
-    {
-      ""path"": ""22543.txt"",
-      ""mode"": ""100644"",
-      ""type"": ""blob"",
-      ""sha"": ""2217ec332eccb0094cfd04cb94e1ff77b636da81"",
-      ""size"": 73548,
-      ""url"": ""https://api.github.com/repos/riverar/mach2/git/blobs/2217ec332eccb0094cfd04cb94e1ff77b636da81""
-    }  ],
-  ""truncated"": false
-}"
     Dim LineStage As String = String.Empty
 
     ''' <summary>
@@ -247,8 +201,6 @@ Public Class GUI
 
         'Get the "tree" array from the API JSON Result
         Try
-            '[DEV] Use Dev JSON to not get rate limited while Testing/Developing
-            'Dim ContentsJSON As String = TempJSONUsedInDevelopment
             Dim ContentsJSONFeatures As String = WebClientFeatures.DownloadString(FeaturesFolderURL)
             Dim JSONObjectFeatures As JObject = JObject.Parse(ContentsJSONFeatures)
             Dim JSONArrayFeatures As JArray = CType(JSONObjectFeatures.SelectToken("tree"), JArray)
