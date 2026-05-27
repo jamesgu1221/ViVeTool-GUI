@@ -80,7 +80,11 @@ Public Class GUI
     ''' </summary>
     Private Sub PopulateBuildComboBox_Check()
         'Add manual option
-        Invoke(Sub() RDDL_Build.Items.Add("Load manually..."))
+        Invoke(Sub()
+                   RDDL_Build.Items.Add("Load manually...")
+                   RemoveHandler RDDL_Build.SelectedIndexChanged, AddressOf PopulateDataGridView
+                   AddHandler RDDL_Build.SelectedIndexChanged, AddressOf PopulateDataGridView
+               End Sub)
 
         If CheckForInternetConnection() Then
             'Populate the Build Combo Box
@@ -236,15 +240,17 @@ Public Class GUI
                        'Set default Text
                        RDDL_Build.Text = "Select Build..."
 
-                       'Add the Handler
-                       AddHandler RDDL_Build.SelectedIndexChanged, AddressOf PopulateDataGridView
-                   End Sub)
+                    End Sub)
             'Enable the Combo Box
             Invoke(Sub() RDDL_Build.Enabled = True)
 
             'Auto-load the newest Build if it is Enabled in the Settings
             If My.Settings.AutoLoad Then
-                Invoke(Sub() RDDL_Build.SelectedItem = RDDL_Build.Items.Item(1))
+                Invoke(Sub()
+                           If RDDL_Build.Items.Count > 1 Then
+                               RDDL_Build.SelectedIndex = 1
+                           End If
+                       End Sub)
             End If
         Catch webex As WebException
             Dim CopyExAndClose As New RadTaskDialogButton With {

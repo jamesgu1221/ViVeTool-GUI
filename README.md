@@ -90,4 +90,3 @@ ViVeTool GUI - Feature Scanner uses [mach2](https://github.com/riverar/mach2) to
 - **AutoUpdater removed**: Upstream update checks have been removed. This fork does not auto-update.
 
 - **CrashReporter removed**: Crash reporting to the original developer has been removed.
-
