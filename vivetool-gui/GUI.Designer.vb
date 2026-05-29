@@ -65,8 +65,8 @@ Partial Class GUI
         '
         Me.RDDL_Build.AutoSize = False
         Me.RDDL_Build.DropDownAnimationEnabled = True
-        Me.RDDL_Build.DropDownMaxSize = New System.Drawing.Size(125, 455)
-        Me.RDDL_Build.DropDownMinSize = New System.Drawing.Size(125, 455)
+        Me.RDDL_Build.DropDownMaxSize = New System.Drawing.Size(420, 455)
+        Me.RDDL_Build.DropDownMinSize = New System.Drawing.Size(420, 455)
         Me.RDDL_Build.DropDownStyle = Telerik.WinControls.RadDropDownStyle.DropDownList
         Me.RDDL_Build.Enabled = False
         Me.RDDL_Build.Location = New System.Drawing.Point(3, 5)
