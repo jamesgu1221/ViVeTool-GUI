@@ -14,7 +14,12 @@
 'You should have received a copy of the GNU General Public License
 'along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Option Strict On
-Imports Newtonsoft.Json.Linq, Albacore.ViVe, System.Runtime.InteropServices, Telerik.WinControls.UI
+Imports Newtonsoft.Json.Linq
+Imports Albacore.ViVe
+Imports Albacore.ViVe.NativeEnums
+Imports Albacore.ViVe.NativeStructs
+Imports System.Runtime.InteropServices
+Imports Telerik.WinControls.UI
 
 ''' <summary>
 ''' ViVeTool GUI
@@ -118,119 +123,37 @@ Public Class GUI
     ''' Populates the Build Combo Box. Used at the Form_Load Event
     ''' </summary>
     Private Sub PopulateBuildComboBox()
-        Dim RepoURL As String = "https://api.github.com/repos/riverar/mach2/git/trees/master"
-        Dim FeaturesFolderURL As String = String.Empty
+        Dim RepoURL As String = "https://api.github.com/repos/riverar/mach2/git/trees/master?recursive=1"
 
-        'Gets the URL of the features Folder that is used in section 2
-#Region "1. Get the URL of the features folder"
-        'Required Headers for the GitHub API
-        Dim WebClientRepo As New WebClient With {
-            .Encoding = System.Text.Encoding.UTF8
-        }
-        WebClientRepo.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8")
-        WebClientRepo.Headers.Add(HttpRequestHeader.UserAgent, "PeterStrick/vivetool-gui")
-
-        'Get the "tree" array from the API JSON Result
-        Try
-            Dim ContentsJSONRepo As String = WebClientRepo.DownloadString(RepoURL)
-            Dim JSONObjectRepo As JObject = JObject.Parse(ContentsJSONRepo)
-            Dim JSONArrayRepo As JArray = CType(JSONObjectRepo.SelectToken("tree"), JArray)
-
-            'Look in the JSON Array for the element: "path" = "features"
-            For Each element In JSONArrayRepo
-                If element("path").ToString = "features" Then
-                    FeaturesFolderURL = element("url").ToString
-                End If
-            Next
-
-        Catch webex As WebException
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                .Text = "Copy Exception and Close"
-            }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(DirectCast(webex.Response, HttpWebResponse).StatusDescription)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            Dim RTD As New RadTaskDialogPage With {
-                    .Caption = " A Network Exception occurred",
-                    .Heading = "A Network Exception occurred. Your IP may have been temporarily rate limited by the GitHub API for an hour.",
-                    .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                }
-            Try
-                RTD.Expander.Text = "GitHub API Response: " & DirectCast(webex.Response, HttpWebResponse).StatusDescription
-            Catch ex As Exception
-                RTD.Expander.Text = webex.ToString
-            End Try
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-            RadTaskDialog.ShowDialog(RTD)
-        Catch ex As Exception
-            Dim CopyExAndClose As New RadTaskDialogButton With {
-                .Text = "Copy Exception and Close"
-            }
-            AddHandler CopyExAndClose.Click, New EventHandler(Sub()
-                                                                  Try
-                                                                      My.Computer.Clipboard.SetText(ex.ToString)
-                                                                  Catch clipex As Exception
-                                                                      'Do nothing
-                                                                  End Try
-                                                              End Sub)
-
-            Dim RTD As New RadTaskDialogPage With {
-                    .Caption = " An Exception occurred",
-                    .Heading = "An unknown Exception occurred.",
-                    .Icon = RadTaskDialogIcon.ShieldErrorRedBar
-                }
-            RTD.Expander.Text = ex.ToString
-            RTD.Expander.ExpandedButtonText = "Collapse Exception"
-            RTD.Expander.CollapsedButtonText = "Show Exception"
-            RTD.CommandAreaButtons.Add(CopyExAndClose)
-            RadTaskDialog.ShowDialog(RTD)
-        End Try
-#End Region
-#Region "2. Get the features folder File Contents"
-        'returns JSON File Contents of riverar/mach2/features
-
-        'Required Headers for the GitHub API
+        'Required Headers for the GitHub API.
         Dim WebClientFeatures As New WebClient With {
             .Encoding = System.Text.Encoding.UTF8
         }
         WebClientFeatures.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8")
         WebClientFeatures.Headers.Add(HttpRequestHeader.UserAgent, "PeterStrick/vivetool-gui")
 
-        'Get the "tree" array from the API JSON Result
+        'Get every feature list under riverar/mach2/features, including the newer nested branch/architecture folders.
         Try
-            Dim ContentsJSONFeatures As String = WebClientFeatures.DownloadString(FeaturesFolderURL)
+            Dim ContentsJSONFeatures As String = WebClientFeatures.DownloadString(RepoURL)
             Dim JSONObjectFeatures As JObject = JObject.Parse(ContentsJSONFeatures)
             Dim JSONArrayFeatures As JArray = CType(JSONObjectFeatures.SelectToken("tree"), JArray)
 
             Dim tempList As New List(Of String)
 
             For Each element In JSONArrayFeatures
-                Select Case element("path").ToString.Split(CChar(".")).Length
-                    Case 0 ' No File name or Extension. Not used in the Mach2 repo and impossible
-                        ' Do nothing
-                    Case 1 ' Filename; Not used in the Mach2 repo
-                        ' Do nothing
-                    Case 2 ' Filename.Extension; Ex: 22449.txt
-                        If element("path").ToString.Split(CChar("."))(1) = "txt" Then
-                            tempList.Add(element("path").ToString.Split(CChar("."))(0))
-                        End If
-                    Case 3 ' File.File.Extension; Ex: 22000.1.txt or 22449_22454_diff.patch
-                        If element("path").ToString.Split(CChar("."))(2) = "txt" Then
-                            tempList.Add(element("path").ToString.Split(CChar("."))(0) & "." & element("path").ToString.Split(CChar("."))(1))
-                        End If
-                    Case 4 ' File.File.File.Extension; Ex: 18980.1_18985.1_diff.patch. Usually used for Diffs in the Mach2 Repo
-                        ' Do Nothing
-                End Select
+                Dim featurePath As String = element("path").ToString
+
+                If featurePath.StartsWith("features/", StringComparison.OrdinalIgnoreCase) AndAlso
+                        featurePath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) Then
+                    tempList.Add(GetFeatureListDisplayName(featurePath))
+                End If
             Next
 
+            tempList.Sort(AddressOf CompareFeatureListNames)
+
             Invoke(Sub()
+                       RDDL_Build.SortStyle = Telerik.WinControls.Enumerations.SortStyle.None
+
                        'Add the Items of tempList to the Combo Box
                        RDDL_Build.Items.AddRange(tempList)
 
@@ -301,8 +224,72 @@ Public Class GUI
             RTD.CommandAreaButtons.Add(CopyExAndClose)
             RadTaskDialog.ShowDialog(RTD)
         End Try
-#End Region
     End Sub
+
+    Private Function GetFeatureListDisplayName(featurePath As String) As String
+        Const FeaturePathPrefix As String = "features/"
+        Const FeaturePathSuffix As String = ".txt"
+
+        Dim displayName As String = featurePath
+
+        If displayName.StartsWith(FeaturePathPrefix, StringComparison.OrdinalIgnoreCase) Then
+            displayName = displayName.Substring(FeaturePathPrefix.Length)
+        End If
+
+        If displayName.EndsWith(FeaturePathSuffix, StringComparison.OrdinalIgnoreCase) Then
+            displayName = displayName.Substring(0, displayName.Length - FeaturePathSuffix.Length)
+        End If
+
+        Return displayName
+    End Function
+
+    Private Function GetSelectedFeatureListPath() As String
+        Dim selectedFeature As String = RDDL_Build.Text.Replace("\", "/")
+
+        If selectedFeature.StartsWith("features/", StringComparison.OrdinalIgnoreCase) Then
+            Return selectedFeature
+        End If
+
+        If selectedFeature.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) Then
+            Return "features/" & selectedFeature
+        End If
+
+        Return "features/" & selectedFeature & ".txt"
+    End Function
+
+    Private Function GetFeatureListTempPath(featureListPath As String) As String
+        Dim safeFileName As String = featureListPath.Replace("/", "_").Replace("\", "_").Replace(":", "_")
+        Return IO.Path.Combine(IO.Path.GetTempPath(), safeFileName)
+    End Function
+
+    Private Function CompareFeatureListNames(left As String, right As String) As Integer
+        Dim leftBuildNumber As Integer = ExtractBuildNumber(left)
+        Dim rightBuildNumber As Integer = ExtractBuildNumber(right)
+        Dim buildComparison As Integer = rightBuildNumber.CompareTo(leftBuildNumber)
+
+        If buildComparison <> 0 Then
+            Return buildComparison
+        End If
+
+        Return String.Compare(left, right, StringComparison.OrdinalIgnoreCase)
+    End Function
+
+    Private Function ExtractBuildNumber(featureListName As String) As Integer
+        Dim fileName As String = IO.Path.GetFileName(featureListName.Replace("/", "\"))
+        Dim buildNumberText As String = String.Empty
+
+        For Each character As Char In fileName
+            If Char.IsDigit(character) Then
+                buildNumberText &= character
+            ElseIf buildNumberText.Length > 0 Then
+                Exit For
+            End If
+        Next
+
+        Dim buildNumber As Integer = 0
+        Integer.TryParse(buildNumberText, buildNumber)
+        Return buildNumber
+    End Function
 
     ''' <summary>
     ''' Override of OnHandleCreated(e As EventArgs).
@@ -422,13 +409,10 @@ Public Class GUI
                         Str(0).Replace(" ", "")
                         Str(1).Replace(" ", "")
                         'Get the Feature Enabled State from the currently processing line.
-                        'RtlFeatureManager.QueryFeatureConfiguration will return Enabled, Disabled or throw a NullReferenceException for Default
-                        Try
-                            Dim State As String = RtlFeatureManager.QueryFeatureConfiguration(CUInt(Str(1)), FeatureConfigurationSection.Runtime).EnabledState.ToString
-                            Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), State, LineStage))
-                        Catch ex As NullReferenceException
-                            Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), "Default", LineStage))
-                        End Try
+                        'FeatureManager.QueryFeatureConfiguration returns Nullable; HasValue=False means no override (= Default).
+                        Dim cfg = FeatureManager.QueryFeatureConfiguration(CUInt(Str(1)), RTL_FEATURE_CONFIGURATION_TYPE.Runtime)
+                        Dim State As String = If(cfg.HasValue, cfg.Value.EnabledState.ToString(), "Default")
+                        Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), State, LineStage))
                     End If
                 Next
                 'Move to the first row, remove the selection and change the Status Label to Done.
@@ -513,8 +497,12 @@ Public Class GUI
     ''' <param name="e">Default EventArgs</param>
     Private Sub BGW_PopulateGridView_DoWork(sender As Object, e As System.ComponentModel.DoWorkEventArgs) Handles BGW_PopulateGridView.DoWork
         If Not BGW_PopulateGridView.CancellationPending Then
+            Dim featureListPath As String = String.Empty
+            Invoke(Sub() featureListPath = GetSelectedFeatureListPath())
+            Dim buildNumber As Integer = ExtractBuildNumber(featureListPath)
+
             'Debug
-            Diagnostics.Debug.WriteLine("Loading Build " & RDDL_Build.Text)
+            Diagnostics.Debug.WriteLine("Loading Build " & GetFeatureListDisplayName(featureListPath))
 
             'Remove all Group Descriptors
             Invoke(Sub() RGV_MainGridView.GroupDescriptors.Clear())
@@ -527,22 +515,22 @@ Public Class GUI
             Try
                 Invoke(Sub() RGV_MainGridView.Rows.Clear())
             Catch ex As Exception
-                Diagnostics.Debug.WriteLine("Exception while clearing row. Build: " & RDDL_Build.Text & ". " & ex.Message)
+                Diagnostics.Debug.WriteLine("Exception while clearing row. Build: " & GetFeatureListDisplayName(featureListPath) & ". " & ex.Message)
             End Try
 
             'Prepare Web Client and download Build TXT
             Dim WebClient As New WebClient With {
                     .Encoding = System.Text.Encoding.UTF8
                 }
-            Dim path As String = IO.Path.GetTempPath & RDDL_Build.Text & ".txt"
-            WebClient.DownloadFile("https://raw.githubusercontent.com/riverar/mach2/master/features/" & RDDL_Build.Text & ".txt", path)
+            Dim path As String = GetFeatureListTempPath(featureListPath)
+            WebClient.DownloadFile("https://raw.githubusercontent.com/riverar/mach2/master/" & featureListPath, path)
 
             'For each line add a grid view entry
             For Each Line In IO.File.ReadAllLines(path)
 
                 'Check Line Stage, used for Grouping
                 Try
-                    If CInt(RDDL_Build.Text) >= 17704 Then
+                    If buildNumber >= 17704 Then
                         If Line = "## Unknown:" Then
                             LineStage = "Modifiable"
                         ElseIf Line = "## Always Enabled:" Then
@@ -571,13 +559,10 @@ Public Class GUI
                     Str(1).Replace(" ", "")
 
                     'Get the Feature Enabled State from the currently processing line.
-                    'RtlFeatureManager.QueryFeatureConfiguration will return Enabled, Disabled or throw a NullReferenceException for Default
-                    Try
-                        Dim State As String = RtlFeatureManager.QueryFeatureConfiguration(CUInt(Str(1)), FeatureConfigurationSection.Runtime).EnabledState.ToString
-                        Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), State, LineStage))
-                    Catch ex As Exception
-                        Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), "Default", LineStage))
-                    End Try
+                    'FeatureManager.QueryFeatureConfiguration returns Nullable; HasValue=False means no override (= Default).
+                    Dim cfg = FeatureManager.QueryFeatureConfiguration(CUInt(Str(1)), RTL_FEATURE_CONFIGURATION_TYPE.Runtime)
+                    Dim State As String = If(cfg.HasValue, cfg.Value.EnabledState.ToString(), "Default")
+                    Invoke(Sub() RGV_MainGridView.Rows.Add(Str(0), Str(1), State, LineStage))
                 End If
             Next
 
@@ -634,7 +619,7 @@ Public Class GUI
         RGV_MainGridView.MasterView.TableSearchRow.SuspendSearch()
 
         'Set Selected Feature to Enabled
-        SetConfig(FeatureEnabledState.Enabled)
+        SetConfig(RTL_FEATURE_ENABLED_STATE.Enabled)
 
         'Resume Searching
         RGV_MainGridView.MasterView.TableSearchRow.ResumeSearch()
@@ -650,7 +635,7 @@ Public Class GUI
         RGV_MainGridView.MasterView.TableSearchRow.SuspendSearch()
 
         'Set Selected Feature to Disabled
-        SetConfig(FeatureEnabledState.Disabled)
+        SetConfig(RTL_FEATURE_ENABLED_STATE.Disabled)
 
         'Resume Searching
         RGV_MainGridView.MasterView.TableSearchRow.ResumeSearch()
@@ -666,51 +651,66 @@ Public Class GUI
         RGV_MainGridView.MasterView.TableSearchRow.SuspendSearch()
 
         'Set Selected Feature to Default Values
-        SetConfig(FeatureEnabledState.Default)
+        SetConfig(RTL_FEATURE_ENABLED_STATE.Default)
 
         'Resume Searching
         RGV_MainGridView.MasterView.TableSearchRow.ResumeSearch()
     End Sub
 
     ''' <summary>
-    ''' Set's the Feature Configuration. Uses the FeatureEnabledState parameter to set the EnabledState of the Feature
+    ''' Set's the Feature Configuration. Uses the state parameter to set the EnabledState of the Feature
     ''' </summary>
-    ''' <param name="FeatureEnabledState">Specifies what Enabled State the Feature should be in. Can be either Enabled, Disabled or Default</param>
-    Private Sub SetConfig(FeatureEnabledState As FeatureEnabledState)
+    ''' <param name="state">Specifies what Enabled State the Feature should be in. Can be either Enabled, Disabled or Default</param>
+    Private Sub SetConfig(state As RTL_FEATURE_ENABLED_STATE)
         Try
-            'Initialize Variables
-            Dim _enabledStateOptions, _variant, _variantPayloadKind, _variantPayload, _group As Integer
-            _enabledStateOptions = 1
-            _group = 4
-
-            'FeatureConfiguration Variable
-            Dim _configs As New List(Of FeatureConfiguration) From {
-                New FeatureConfiguration() With {
+            'Upstream API takes RTL_FEATURE_CONFIGURATION_UPDATE() array, not List(Of T)
+            Dim _configs As RTL_FEATURE_CONFIGURATION_UPDATE() = {
+                New RTL_FEATURE_CONFIGURATION_UPDATE() With {
                     .FeatureId = CUInt(RGV_MainGridView.SelectedRows.Item(0).Cells(1).Value),
-                    .EnabledState = FeatureEnabledState,
-                    .EnabledStateOptions = _enabledStateOptions,
-                    .Group = _group,
-                    .[Variant] = _variant,
-                    .VariantPayload = _variantPayload,
-                    .VariantPayloadKind = _variantPayloadKind,
-                    .Action = FeatureConfigurationAction.UpdateEnabledState
+                    .Priority = RTL_FEATURE_CONFIGURATION_PRIORITY.User,
+                    .EnabledState = state,
+                    .EnabledStateOptions = RTL_FEATURE_ENABLED_STATE_OPTIONS.None,
+                    .Variant = 0UI,
+                    .VariantPayload = 0UI,
+                    .VariantPayloadKind = RTL_FEATURE_VARIANT_PAYLOAD_KIND.None,
+                    .Operation = RTL_FEATURE_CONFIGURATION_OPERATION.FeatureState
                 }
             }
 
-            'Set's the selected Feature to it's specified EnabledState. If anything goes wrong, display a Error Message in the Status Label.
-            'On Successful Operations; 
-            'RtlFeatureManager.SetBootFeatureConfigurations(_configs) returns True
-            'and RtlFeatureManager.SetLiveFeatureConfigurations(_configs, FeatureConfigurationSection.Runtime) returns 0
-            If Not RtlFeatureManager.SetBootFeatureConfigurations(_configs) OrElse RtlFeatureManager.SetLiveFeatureConfigurations(_configs, FeatureConfigurationSection.Runtime) >= 1 Then
+            'Write Boot first; on success mark LKG as BootPending so kernel picks it up on next boot.
+            'Then write Runtime for live effect, preserving the old short-circuit behavior on Boot failures.
+            Dim bootResult As Integer = FeatureManager.SetFeatureConfigurations(_configs, RTL_FEATURE_CONFIGURATION_TYPE.Boot)
+            Dim bootPendingResult As Integer = 0
+            Dim liveResult As Integer = 0
+            Dim bootDetails As String = String.Empty
+
+            If bootResult = 0 Then
+                bootResult = EnsureBootConfigurationsStored(_configs, bootDetails)
+
+                If bootResult = 0 AndAlso TrySetBootPending(bootPendingResult) Then
+                    liveResult = FeatureManager.SetFeatureConfigurations(_configs, RTL_FEATURE_CONFIGURATION_TYPE.Runtime)
+                End If
+            End If
+
+            If bootResult <> 0 OrElse bootPendingResult <> 0 OrElse liveResult <> 0 Then
+                Dim errorDetails As String = GetSetConfigErrorDetails(bootResult, bootPendingResult, liveResult)
+                If Not String.IsNullOrWhiteSpace(bootDetails) Then
+                    errorDetails &= vbNewLine & vbNewLine & bootDetails
+                End If
+
                 'Set Status Label
                 RLE_StatusLabel.Text = "An error occurred while setting a feature configuration for " & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString
 
                 'Fancy Message Box
                 Dim RTD As New RadTaskDialogPage With {
                     .Caption = " An Error occurred",
-                    .Heading = "An Error occurred while trying to set Feature " & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString & " to " & FeatureEnabledState.ToString,
+                    .Heading = "An Error occurred while trying to set Feature " & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString & " to " & state.ToString(),
                     .Icon = RadTaskDialogIcon.Error
                 }
+
+                RTD.Expander.Text = errorDetails
+                RTD.Expander.ExpandedButtonText = "Collapse Details"
+                RTD.Expander.CollapsedButtonText = "Show Details"
 
                 'Add a Close Button instead of a OK Button
                 RTD.CommandAreaButtons.Add(RadTaskDialogButton.Close)
@@ -719,17 +719,23 @@ Public Class GUI
                 RadTaskDialog.ShowDialog(RTD)
             Else
                 'Set Status Label
-                RLE_StatusLabel.Text = "Successfully set feature configuration for" & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString & " with Value " & FeatureEnabledState.ToString
+                RLE_StatusLabel.Text = "Successfully set feature configuration for" & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString & " with Value " & state.ToString()
 
                 'Set Cell Text
-                RGV_MainGridView.CurrentRow.Cells.Item(2).Value = FeatureEnabledState.ToString
+                RGV_MainGridView.CurrentRow.Cells.Item(2).Value = state.ToString()
 
                 'Fancy Message Box
                 Dim RTD As New RadTaskDialogPage With {
                     .Caption = " Success",
-                    .Heading = "Successfully set Feature " & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString & " to " & FeatureEnabledState.ToString,
+                    .Heading = "Successfully set Feature " & RGV_MainGridView.SelectedRows.Item(0).Cells(0).Value.ToString & " to " & state.ToString(),
                     .Icon = RadTaskDialogIcon.ShieldSuccessGreenBar
                 }
+
+                If Not String.IsNullOrWhiteSpace(bootDetails) Then
+                    RTD.Expander.Text = bootDetails
+                    RTD.Expander.ExpandedButtonText = "Collapse Details"
+                    RTD.Expander.CollapsedButtonText = "Show Details"
+                End If
 
                 'Add a Close Button instead of a OK Button
                 RTD.CommandAreaButtons.Add(RadTaskDialogButton.Close)
@@ -773,6 +779,195 @@ Public Class GUI
             RadTaskDialog.ShowDialog(RTD)
         End Try
     End Sub
+
+    Private Function EnsureBootConfigurationsStored(configs As RTL_FEATURE_CONFIGURATION_UPDATE(), ByRef details As String) As Integer
+        Dim detailLines As New List(Of String)
+
+        For Each config In configs
+            Dim configDetails As String = String.Empty
+            Dim result As Integer = EnsureBootConfigurationStored(config, configDetails)
+            If Not String.IsNullOrWhiteSpace(configDetails) Then
+                detailLines.Add(configDetails)
+            End If
+
+            If result <> 0 Then
+                details = String.Join(vbNewLine, detailLines)
+                Return result
+            End If
+        Next
+
+        details = String.Join(vbNewLine, detailLines)
+        Return 0
+    End Function
+
+    Private Function EnsureBootConfigurationStored(config As RTL_FEATURE_CONFIGURATION_UPDATE, ByRef details As String) As Integer
+        If config.Priority = RTL_FEATURE_CONFIGURATION_PRIORITY.UserPolicy Then
+            details = "Boot registry verification skipped for UserPolicy priority."
+            Return 0
+        End If
+
+        Dim overrideKeyPath As String = GetBootOverrideKeyPath(config)
+        Dim displayPath As String = "HKLM:\" & overrideKeyPath
+
+        If BootConfigurationMatches(config, overrideKeyPath) Then
+            details = "Boot registry verified at " & displayPath & " (" & GetBootConfigurationDetails(config) & ")."
+            Return 0
+        End If
+
+        Try
+            Using baseKey = OpenLocalMachineBaseKey()
+                If config.Operation = RTL_FEATURE_CONFIGURATION_OPERATION.ResetState Then
+                    baseKey.DeleteSubKeyTree(overrideKeyPath, False)
+                    baseKey.Flush()
+                    details = "Boot registry reset verified at " & displayPath & "."
+                    Return 0
+                End If
+
+                Using rKey = baseKey.CreateSubKey(overrideKeyPath)
+                    If rKey Is Nothing Then
+                        details = "Boot registry write failed: CreateSubKey returned Nothing for " & displayPath & "."
+                        Return -1073741823 '0xC0000001
+                    End If
+
+                    If config.Operation.HasFlag(RTL_FEATURE_CONFIGURATION_OPERATION.FeatureState) Then
+                        rKey.SetValue("EnabledState", CInt(config.EnabledState), Microsoft.Win32.RegistryValueKind.DWord)
+                        rKey.SetValue("EnabledStateOptions", CInt(config.EnabledStateOptions), Microsoft.Win32.RegistryValueKind.DWord)
+                    End If
+
+                    If config.Operation.HasFlag(RTL_FEATURE_CONFIGURATION_OPERATION.VariantState) Then
+                        rKey.SetValue("Variant", CInt(config.Variant), Microsoft.Win32.RegistryValueKind.DWord)
+                        rKey.SetValue("VariantPayload", CInt(config.VariantPayload), Microsoft.Win32.RegistryValueKind.DWord)
+                        rKey.SetValue("VariantPayloadKind", CInt(config.VariantPayloadKind), Microsoft.Win32.RegistryValueKind.DWord)
+                    End If
+
+                    rKey.Flush()
+                End Using
+
+                baseKey.Flush()
+            End Using
+
+            If BootConfigurationMatches(config, overrideKeyPath) Then
+                details = "Boot registry was missing; wrote and verified " & displayPath & " (" & GetBootConfigurationDetails(config) & ")."
+                Return 0
+            End If
+
+            details = "Boot registry write verification failed at " & displayPath & "."
+            Return -1073741823 '0xC0000001
+        Catch ex As Exception
+            details = "Boot registry write threw " & ex.GetType().Name & " at " & displayPath & ": " & ex.Message
+            Return ex.HResult
+        End Try
+    End Function
+
+    Private Function BootConfigurationMatches(config As RTL_FEATURE_CONFIGURATION_UPDATE, overrideKeyPath As String) As Boolean
+        Try
+            Using baseKey = OpenLocalMachineBaseKey()
+                Using rKey = baseKey.OpenSubKey(overrideKeyPath)
+                    If rKey Is Nothing Then
+                        Return config.Operation = RTL_FEATURE_CONFIGURATION_OPERATION.ResetState
+                    End If
+
+                    If config.Operation = RTL_FEATURE_CONFIGURATION_OPERATION.ResetState Then
+                        Return False
+                    End If
+
+                    If config.Operation.HasFlag(RTL_FEATURE_CONFIGURATION_OPERATION.FeatureState) Then
+                        If Convert.ToInt32(rKey.GetValue("EnabledState", -1)) <> CInt(config.EnabledState) Then
+                            Return False
+                        End If
+
+                        If Convert.ToInt32(rKey.GetValue("EnabledStateOptions", -1)) <> CInt(config.EnabledStateOptions) Then
+                            Return False
+                        End If
+                    End If
+
+                    If config.Operation.HasFlag(RTL_FEATURE_CONFIGURATION_OPERATION.VariantState) Then
+                        If Convert.ToInt32(rKey.GetValue("Variant", -1)) <> CInt(config.Variant) Then
+                            Return False
+                        End If
+
+                        If Convert.ToInt32(rKey.GetValue("VariantPayload", -1)) <> CInt(config.VariantPayload) Then
+                            Return False
+                        End If
+
+                        If Convert.ToInt32(rKey.GetValue("VariantPayloadKind", -1)) <> CInt(config.VariantPayloadKind) Then
+                            Return False
+                        End If
+                    End If
+
+                    Return True
+                End Using
+            End Using
+        Catch
+            Return False
+        End Try
+    End Function
+
+    Private Function GetBootOverrideKeyPath(config As RTL_FEATURE_CONFIGURATION_UPDATE) As String
+        Dim obfuscatedId As String = ObfuscationHelpers.ObfuscateFeatureId(config.FeatureId).ToString()
+        Return "SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\" & CInt(config.Priority).ToString() & "\" & obfuscatedId
+    End Function
+
+    Private Function GetBootConfigurationDetails(config As RTL_FEATURE_CONFIGURATION_UPDATE) As String
+        Return "FeatureId=" & config.FeatureId.ToString() &
+            ", Priority=" & CInt(config.Priority).ToString() &
+            ", EnabledState=" & CInt(config.EnabledState).ToString() &
+            ", EnabledStateOptions=" & CInt(config.EnabledStateOptions).ToString()
+    End Function
+
+    Private Function OpenLocalMachineBaseKey() As Microsoft.Win32.RegistryKey
+        Return Microsoft.Win32.RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, Microsoft.Win32.RegistryView.Registry64)
+    End Function
+
+    Private Function TrySetBootPending(ByRef result As Integer) As Boolean
+        Const StatusObjectNameNotFound As Integer = -1073741772 '0xC0000034
+
+        Dim currentState As BSD_FEATURE_CONFIGURATION_STATE = BSD_FEATURE_CONFIGURATION_STATE.Uninitialized
+        result = FeatureManager.GetBootFeatureConfigurationState(currentState)
+
+        If result <> 0 Then
+            If result <> StatusObjectNameNotFound Then
+                Return False
+            End If
+
+            result = FeatureManager.InitializeBootStatusDataFile()
+            If result <> 0 Then
+                Return False
+            End If
+
+            currentState = BSD_FEATURE_CONFIGURATION_STATE.Uninitialized
+        End If
+
+        If currentState <> BSD_FEATURE_CONFIGURATION_STATE.BootPending Then
+            result = FeatureManager.SetBootFeatureConfigurationState(BSD_FEATURE_CONFIGURATION_STATE.BootPending)
+            If result <> 0 Then
+                Return False
+            End If
+        End If
+
+        result = 0
+        Return True
+    End Function
+
+    Private Function GetSetConfigErrorDetails(bootResult As Integer, bootPendingResult As Integer, liveResult As Integer) As String
+        If bootResult <> 0 Then
+            Return "Boot store failed with " & FormatStatusCode(bootResult) & ". Runtime store was not changed."
+        End If
+
+        If bootPendingResult <> 0 Then
+            Return "Boot status update failed with " & FormatStatusCode(bootPendingResult) & ". Runtime store was not changed."
+        End If
+
+        If liveResult <> 0 Then
+            Return "Runtime store failed with " & FormatStatusCode(liveResult) & ". Boot store was changed."
+        End If
+
+        Return "Feature configuration failed for an unknown reason."
+    End Function
+
+    Private Function FormatStatusCode(result As Integer) As String
+        Return "0x" & (CLng(result) And 4294967295L).ToString("X8")
+    End Function
 
     ''' <summary>
     ''' Selection Changed Event. Used to enable the RDDB_PerformAction Button, upon selecting a row.
